@@ -35,7 +35,9 @@ Source/
 │   └── Private/
 │       └── MySQLDatabase.cpp    # Core implementation (~500 lines)
 └── ThirdParty/MySqlConnectLibrary/
-    └── MariaDB_Connector_C_64-bit/  # Windows x64 MariaDB client library
+    ├── MariaDBConnectorLibs.Build.cs  # Platform-specific library linking
+    ├── Win64/                         # Windows x64 (include/ + lib/)
+    └── Linux/                         # Linux x64 (include/ + lib/)
 ```
 
 **Key Classes:**
@@ -50,7 +52,8 @@ Source/
 
 ## Platform Support
 
-- Windows 64-bit only (mariadbclient.x64.lib)
+- Windows 64-bit (mariadbclient.x64.lib - static library)
+- Linux x64 (libmariadbclient.a - static library, requires libssl, libcrypto, zlib, pthread)
 - UE5 versions 5.0-5.3 tested
 - MySQL 5.0+ and MariaDB compatible
 
