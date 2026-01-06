@@ -16,7 +16,7 @@ struct MYSQLCONNECT_API FMySQLConnectorConnectionStruct
 
 		/** The database name (not the filename) */
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MySQLConnector Database Reference")
-		UMySQLConnection* conn;
+		UMySQLConnection* conn = nullptr;
 
 };
 
@@ -55,7 +55,7 @@ struct MYSQLCONNECT_API FMySQLConnectoreQueryResult
 
 	/** Was the query successful or not */
 	UPROPERTY(BlueprintReadOnly, Category = "MySQLConnector Query Result")
-		bool Success;
+		bool Success = false;
 
 	/** If the query was unsuccessful a human readable error message will be populated here */
 	UPROPERTY(BlueprintReadOnly, Category = "MySQLConnector Query Result")
@@ -126,7 +126,7 @@ class MYSQLCONNECT_API UMySQLDatabase : public UObject
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "MySQLConnector")
-	static UMySQLConnection* MySQLInitConnection(FString Host, FString UserName, FString UserPassword, FString DatabaseName, int ConnectionTimeout, int ReadTimeout, int WriteTimeout);
+	static UMySQLConnection* MySQLInitConnection(FString Host, FString UserName, FString UserPassword, FString DatabaseName, int Port = 3306, int ConnectionTimeout = 5, int ReadTimeout = 5, int WriteTimeout = 5, FString SslCaPath = TEXT(""));
 
 
 	UFUNCTION(BlueprintCallable, Category = "MySQLConnector|Query")

@@ -15,6 +15,8 @@
 *.so
 *.dylib
 *.dll
+# Exception: ThirdParty libraries
+!Source/ThirdParty/**/*.dll
 
 # Fortran module files
 *.mod
@@ -24,6 +26,8 @@
 *.la
 *.a
 *.lib
+# Exception: ThirdParty libraries
+!Source/ThirdParty/**/*.lib
 
 # Executables
 *.exe

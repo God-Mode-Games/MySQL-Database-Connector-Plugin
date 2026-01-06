@@ -2,13 +2,15 @@
 #include "MySQLConnector.h"
 #include <string>
 #include "Engine.h"
+#include "Misc/Paths.h"
+
 
 UMySQLDatabase::UMySQLDatabase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-UMySQLConnection* UMySQLDatabase::MySQLInitConnection(FString Host, FString UserName, FString UserPassword, FString DatabaseName, int ConnectionTimeout, int ReadTimeout, int WriteTimeout )
+UMySQLConnection* UMySQLDatabase::MySQLInitConnection(FString Host, FString UserName, FString UserPassword, FString DatabaseName, int Port, int ConnectionTimeout, int ReadTimeout, int WriteTimeout, FString SslCaPath)
 {
 
 	std::string HostString(TCHAR_TO_UTF8(*Host));
@@ -36,13 +38,14 @@ UMySQLConnection* UMySQLDatabase::MySQLInitConnection(FString Host, FString User
 
 	if (!cs->globalCon)
 	{
-		
+
 		UE_LOG(LogTemp, Error, TEXT("MySQLInitConnection: FAILED TO INIT connection"));
 		mysql_library_end();
 
 		return nullptr;
 	}
-	
+
+
 	// min time and max time to wait for connection
 	if (Ctimeout < 1 || Ctimeout>240)
 		Ctimeout = 5;
@@ -77,7 +80,7 @@ UMySQLConnection* UMySQLDatabase::MySQLInitConnection(FString Host, FString User
 	if (Wimeout < 1 || Wimeout>240)
 		Wimeout = 5;
 
-	// set timeout to wait for timeout 
+	// set timeout to wait for timeout
 	if (mysql_optionsv(cs->globalCon, MYSQL_OPT_WRITE_TIMEOUT, (void*)&Wimeout) != 0)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, TEXT("MySQLConnector: Can't set set write time out"));
@@ -85,25 +88,36 @@ UMySQLConnection* UMySQLDatabase::MySQLInitConnection(FString Host, FString User
 		UMySQLConnection::MySQLCloseConnection(cs);
 		return nullptr;
 	}
-	
 
-	
+	// Configure SSL if CA path provided
+	unsigned long ClientFlags = 0;
+	if (!SslCaPath.IsEmpty())
+	{
+		std::string CaPathString(TCHAR_TO_UTF8(*SslCaPath));
+		mysql_options(cs->globalCon, MYSQL_OPT_SSL_CA, CaPathString.c_str());
+		ClientFlags = CLIENT_SSL;
+	}
+
+	// Save handle before connect (mysql_real_connect returns NULL on failure but we need original handle for error)
+	MYSQL* OriginalHandle = cs->globalCon;
 
 	cs->globalCon=mysql_real_connect( cs->globalCon,
 	                        HostString.c_str(),
 	                        UserNameString.c_str(),
 	                        UserPasswordString.c_str(),
 	                        DatabaseNameString.c_str(),
-		3306, nullptr, 0);
+		Port, nullptr, ClientFlags);
 
 	if (!cs->globalCon)
 	{
-		FString error = mysql_error(cs->globalCon);
+		// Get error from original handle since cs->globalCon is now NULL
+		FString error = UTF8_TO_TCHAR(mysql_error(OriginalHandle));
+		unsigned int errnum = mysql_errno(OriginalHandle);
 
-		UE_LOG(LogTemp, Error, TEXT("%s"),*error);
+		UE_LOG(LogTemp, Error, TEXT("MySQL Error %d: %s"), errnum, *error);
 		UE_LOG(LogTemp, Error, TEXT("MySQLInitConnection: Failed to Connect to Database!"));
-		
-		UMySQLConnection::MySQLCloseConnection(cs);
+
+		mysql_close(OriginalHandle);
 
 		return nullptr;
 	}

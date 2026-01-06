@@ -13,7 +13,14 @@ public class MariaDBConnectorLibs : ModuleRules
 		{
 			string PlatformPath = Path.Combine(ModuleDirectory, "Win64");
 			PublicIncludePaths.Add(Path.Combine(PlatformPath, "include"));
-			PublicAdditionalLibraries.Add(Path.Combine(PlatformPath, "lib", "mariadbclient.x64.lib"));
+
+			// Use import library for dynamic linking
+			string LibPath = Path.Combine(PlatformPath, "lib");
+			PublicAdditionalLibraries.Add(Path.Combine(LibPath, "libmariadb.lib"));
+
+			// Copy DLL to output
+			string DllPath = Path.Combine(LibPath, "libmariadb.dll");
+			RuntimeDependencies.Add("$(BinaryOutputDir)/libmariadb.dll", DllPath);
 		}
 		else if (Target.Platform == UnrealTargetPlatform.Linux)
 		{
